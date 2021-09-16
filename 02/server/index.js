@@ -1,18 +1,40 @@
 const Vue = require('vue')
-const server = require('express')()
-const renderer = require('vue-server-renderer').createRenderer()
+const express = require('express')
+const app = express()
+const fs = require("fs");
+const path = require("path");
+const { createBundleRenderer } = require('vue-server-renderer')
 
-const page = new Vue({
-  template: '<div>hello vue ssr, 你好</div>'
+const serverBundle = require('../dist/server/vue-ssr-server-bundle.json')
+// 客户端清单
+const clientManifest = require('../dist/client/vue-ssr-client-manifest.json')
+// 宿主模板文件
+const serverTemplate = fs.readFileSync(
+  "./public/index.temp.html",
+  "utf8"
+);
+
+const renderer = createBundleRenderer(serverBundle, {
+  runInNewContext: false,
+  template: serverTemplate,
+  clientManifest, // 注入前端打包好的 js 文件
 })
 
-server.get('*', async (req, res) => {
-  console.log('url', req.url);
-  const html = await renderer.renderToString(page)
+// 中间件处理静态文件请求
+app.use(express.static('../dist/client'));
+// app.use(express.static('../dist/client', { index: false }));
+
+// 路由的处理交给vue
+app.get('*', async (req, res) => {
+  const context = {
+    url: req.url,
+    title: 'ssr test'
+  }
+  const html = await renderer.renderToString(context)
   console.log('html', html);
   res.send(html)
 })
 
-server.listen(8089, () => {
+app.listen(8089, () => {
   console.log('服务启动成功');
 })
