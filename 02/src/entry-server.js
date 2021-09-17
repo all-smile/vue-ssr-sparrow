@@ -6,34 +6,31 @@ export default (context) => {
   // 因为有可能会是异步路由钩子函数或组件，所以我们将返回一个 Promise，
   // 以便服务器能够等待所有的内容在渲染前，
   // 就已经准备就绪。
-  try {
-    return new Promise((resolve, reject) => {
-      const { app, router } = createApp();
+  return new Promise((resolve, reject) => {
+    const { url } = context
+    const { app, router } = createApp()
+    const { fullPath } = router.resolve(url).route
 
-      // 设置服务器端 router 的位置
-      router.push(context.url);
+    console.log('fullPath', fullPath);
 
-      // 等到 router 将可能的异步组件和钩子函数解析完
-      router.onReady(() => {
-        const matchedComponents = router.getMatchedComponents();
-        // 匹配不到的路由，执行 reject 函数，并返回 404
-        if (!matchedComponents.length) {
-          return reject({ code: 404 });
-        }
+    if (fullPath !== url) {
+      return reject({ url: fullPath })
+    }
 
-        // Promise 应该 resolve 应用程序实例，以便它可以渲染
-        resolve(app);
-      }, reject('1111'));
-    }).catch((error) => {
-      console.log('sdfgffdsasdf');
-      throw new Error(error);
-    });
-  } catch (err) {
-    console.log(err);
-  }
+    // 设置服务器端 router 的位置
+    router.push(context.url)
+
+    // 等到 router 将可能的异步组件和钩子函数解析完
+    router.onReady(() => {
+      const matchedComponents = router.getMatchedComponents()
+      // 匹配不到的路由，执行 reject 函数，并返回 404
+      if (!matchedComponents.length) {
+        return reject({ code: 404 }) // 上层process.on 'unhandledRejection'
+      }
+
+      // Promise 应该 resolve 应用程序实例，以便它可以渲染
+      resolve(app)
+    }, reject)
+  }).catch(error => console.log('router', error))
 };
 
-process.on('unhandledRejection', (reason, p) => {
-  console.log('Unhandled Rejection at:', p, 'reason:', reason);
-  // application specific logging, throwing an error, or other logic here
-});

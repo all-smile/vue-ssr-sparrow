@@ -14,7 +14,7 @@ export function createRouter() {
       // 懒加载 () => import('')
       // { path: '/', component: () => import('@/pages/Home/index.vue') },
       // { path: '/my', component: () => import('@pages/My/index.vue') },
-      { path: "/home", name: "Home", component: Home },
+      { path: "/", name: "Home", component: Home },
       { path: "/my", name: "My", component: My },
     ],
   });

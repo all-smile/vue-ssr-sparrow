@@ -31,10 +31,16 @@ app.get('*', async (req, res) => {
     title: 'ssr test'
   }
   const html = await renderer.renderToString(context)
-  console.log('html', html);
+  // console.log('html', html);
   res.send(html)
 })
 
 app.listen(8089, () => {
   console.log('服务启动成功');
 })
+
+
+process.on('unhandledRejection', error => {
+  // Will print "unhandledRejection err is not defined"
+  console.log('unhandledRejection', error);
+});
